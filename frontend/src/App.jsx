@@ -22,7 +22,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ResultScreen } from './components/ResultScreen';
 import { usePoseTracker } from './hooks/usePoseTracker';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+const API = 'https://mletu-production.up.railway.app';
 
 // Where "Complete & Next" sends the learner once they finish the final step.
 const COMPLETE_REDIRECT_URL =
