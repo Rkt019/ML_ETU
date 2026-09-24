@@ -1,0 +1,49 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ── Online Labs / Movement Labs brand palette ─────────────────────── */
+  --bg:          #FFFDF8;   /* cream page background */
+  --surface:     #FFFFFF;   /* cards / panels on cream */
+  --surface2:    #FBF3EA;   /* secondary warm panel (footers, inputs) */
+  --maroon:      #570013;   /* navbar / hero background */
+  --maroon-dark: #2A0605;   /* deepest maroon, gradients/edges */
+  --maroon-soft: #7A1F2B;   /* borders/dividers on maroon surfaces */
+
+  --accent:      #E5862D;   /* primary orange (buttons, active states) */
+  --accent-dark: #B9500F;   /* burnt orange (hover / secondary button fill) */
+  --accent-soft: #F3B072;   /* light orange for tints/badges */
+  --rose:        #87515D;   /* muted rose-maroon, attributions/labels */
+
+  --success:     #2F9E73;   /* watched / tracking-live state */
+  --warn:        #C9781E;   /* warnings */
+  --danger:      #B23A3A;   /* stop / error state */
+
+  --text:        #2A0605;   /* headings, high-emphasis text */
+  --text-body:   #4A2E2E;   /* body copy */
+  --text-dim:    #8A6F6F;   /* secondary / muted text */
+  --text-oncream:#FFFDF8;   /* text placed on maroon surfaces */
+
+  --border:      #E8DCD0;   /* light warm border, cream areas */
+  --border-dark: #6B1A1A;   /* border on maroon areas */
+
+  --font-heading: 'Playfair Display', 'Georgia', serif;
+  --font-body:    'Poppins', sans-serif;
+  --radius:       12px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-body);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+h1, h2, h3, .heading {
+  font-family: var(--font-heading);
+  color: var(--accent);
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-body);
+}
