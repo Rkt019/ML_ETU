@@ -5,7 +5,7 @@
  * appropriate directional scores and movement breakdown for that step.
  *
  *   up-down    → shows Up Score + Down Score, pitch movement details
- *   right-left → shows Right Score + Left Score, yaw movement details
+ *   right and-left → shows Right Score + Left Score, yaw movement details
  */
 
 import React from 'react';
