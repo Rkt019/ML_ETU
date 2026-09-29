@@ -29,6 +29,7 @@ export function ResultScreen({ result, studentName, videoType = 'up-down', onRet
     ? [
         { score: right_score, label: 'Right', color: '#2F9E73' },
         { score: left_score,  label: 'Left',  color: '#B9500F' },
+        
       ]
     : [
         { score: up_score,   label: 'Up',   color: '#E5862D' },
@@ -80,6 +81,30 @@ export function ResultScreen({ result, studentName, videoType = 'up-down', onRet
         ))}
         */}
         <ScoreRing score={face_visible_pct} label="Face Visible" color="#E5862D" size={80} />
+
+       {isRightLeft?( 
+
+
+<>
+<ScoreRing score={right_score} label="Right Turn" color="#2F9E73" size={80} />
+
+<ScoreRing score={left_score} label="Left Turn" color="#B9500F" size={80} />
+</>
+
+
+
+
+
+       
+      ):(
+        <>
+        <ScoreRing score={up_score} label="Upward Tilt" color="#E5862D" size={80} />
+        <ScoreRing score={down_score} label="Downward Tilt" color="#E5862D" size={80} />
+        </>
+       
+      ) }
+     
+       
       </div>
 
       {/* False-start note */}

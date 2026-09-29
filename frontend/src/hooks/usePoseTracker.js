@@ -14,8 +14,8 @@
 import { useRef, useCallback, useState, useEffect } from 'react';
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 
-// const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-const API = 'https://mletu-production.up.railway.app';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// const API = 'https://mletu-production.up.railway.app';
 
 
 const SAMPLE_INTERVAL_MS = 167; // ~6 frames/sec — matches extract_reference.py's sample_rate=6,
