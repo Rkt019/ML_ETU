@@ -1,3 +1,4 @@
+
 /**
  * usePoseTracker.js — v2.0
  *
@@ -148,6 +149,7 @@ export function usePoseTracker() {
   const sessionIdRef = useRef(null);
   const countRef     = useRef(0);
   const maxFramesRef = useRef(Infinity); // caps sampling to the teacher clip's duration
+  const clockRef     = useRef(null);     // returns the teacher video's playback time (the music clock)
 
   const [isTracking,  setIsTracking]  = useState(false);
   const [frameCount,  setFrameCount]  = useState(0);
@@ -193,6 +195,10 @@ export function usePoseTracker() {
         return;
       }
 
+      // Read the music time before detection so the stamp matches the frame being analysed.
+      const time = clockRef.current
+        ? clockRef.current()
+        : countRef.current * SAMPLE_INTERVAL_MS / 1000;
       const rawPose = await detectPose(vid);
       const visible = !!rawPose;
       const pose    = rawPose || { yaw: 0, pitch: 0, roll: 0 };
@@ -203,7 +209,7 @@ export function usePoseTracker() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             session_id: sid,
-            time: parseFloat((countRef.current * SAMPLE_INTERVAL_MS / 1000).toFixed(3)),
+            time: parseFloat(time.toFixed(3)),
             yaw:   pose.yaw,
             pitch: pose.pitch,
             roll:  pose.roll,
@@ -217,18 +223,22 @@ export function usePoseTracker() {
   }
 
   /**
-   * startTracking(videoType, durationSec)
+   * startTracking(videoType, durationSec, getMediaTime)
    * @param {string} videoType   'up-down' | 'right-left'
    * @param {number} [durationSec]  teacher clip duration, used to cap the
    *   number of frames sampled so capture can never run past the reference
    *   clip (optional — if omitted, no cap is applied and the caller is
    *   expected to stop tracking when the teacher video ends, as before).
+   * @param {() => number} [getMediaTime]  returns the teacher video's current
+   *   playback time; each frame is stamped with it so the backend can check
+   *   timing against the music. Falls back to counting samples if omitted.
    */
-  const startTracking = useCallback(async (videoType = 'up-down', durationSec) => {
+  const startTracking = useCallback(async (videoType = 'up-down', durationSec, getMediaTime) => {
     setCameraError(null);
     setFrameCount(0);
     setStreamReady(false);
     countRef.current = 0;
+    clockRef.current = getMediaTime || null;
     maxFramesRef.current = (typeof durationSec === 'number' && durationSec > 0)
       // +2 frames of buffer for interval/scheduling jitter near the end of the clip
       ? Math.ceil((durationSec * 1000) / SAMPLE_INTERVAL_MS) + 2

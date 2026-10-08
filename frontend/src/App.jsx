@@ -20,6 +20,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { ResultScreen } from './components/ResultScreen';
+import { HastaPractice } from './components/HastaPractice';
 import { usePoseTracker } from './hooks/usePoseTracker';
 
 const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
@@ -45,7 +46,31 @@ const VIDEO_OPTIONS = [
     color: '#2F9E73',
     instruction: 'Turn your head right and left',
   },
+  {
+    // Hand gestures: has its own practice screen (HastaPractice), not the head flow
+    type:  'hasta',
+    label: 'Hasta Mudras',
+    icon:  '✋',
+    color: '#9B3D6E',
+    instruction: 'Copy the teacher\'s hand gesture',
+  },
 ];
+
+const BEAT_FLASH_SEC = 0.12;
+
+// Detected beats inside the clip; a regular grid at the beat period before
+// the first and after the last detected beat (the tracker can miss the edges).
+function isOnBeat(t, beats, period) {
+  if (!beats?.length || !period) return false;
+  const first = beats[0];
+  const last  = beats[beats.length - 1];
+  if (t < first || t > last + period) {
+    const anchor = t < first ? first : last;
+    const phase  = (((t - anchor) % period) + period) % period;
+    return phase < BEAT_FLASH_SEC;
+  }
+  return beats.some(b => t >= b && t - b < BEAT_FLASH_SEC);
+}
 
 export default function App() {
   const [videoIndex,     setVideoIndex]     = useState(0);
@@ -59,12 +84,14 @@ export default function App() {
   const [teacherPlaying, setTeacherPlaying] = useState(false);
   const [starting,       setStarting]       = useState(false);
   const [finishing,      setFinishing]      = useState(false);
+  const [beatOn,         setBeatOn]         = useState(false);
 
   const teacherVideoRef  = useRef(null);
   const resultSectionRef = useRef(null);
 
   const current   = VIDEO_OPTIONS[videoIndex];
   const videoType = current.type;
+  const isHasta   = videoType === 'hasta';
 
   const {
     videoRef: webcamRef,
@@ -94,6 +121,7 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
     setRefInfo(null);
+    if (videoType === 'hasta') return;
 
     const load = (attempt = 0) => {
       fetch(`${API}/reference_info?video_type=${videoType}`)
@@ -127,6 +155,21 @@ export default function App() {
     const vid = teacherVideoRef.current;
     if (vid) { vid.pause(); vid.currentTime = 0; }
   }, [videoType]);
+
+  // ── Flash the beat chip in time with the music while the teacher plays ─────
+  useEffect(() => {
+    const beats  = refInfo?.beats;
+    const period = refInfo?.beat_period;
+    if (!teacherPlaying || !beats?.length) { setBeatOn(false); return; }
+    let raf;
+    const loop = () => {
+      const vid = teacherVideoRef.current;
+      if (vid) setBeatOn(isOnBeat(vid.currentTime, beats, period));
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [teacherPlaying, refInfo]);
 
   // ── Scroll result into view ──────────────────────────────────────────────────
   useEffect(() => {
@@ -191,7 +234,11 @@ export default function App() {
     // tracking, exactly as before. Reference availability itself is no
     // longer required to unlock the button — the backend already validates
     // it in /start_session and reports a clear error if something is wrong.
-    const ok = await startTracking(videoType, refInfo?.duration);
+    const ok = await startTracking(
+      videoType,
+      refInfo?.duration,
+      () => teacherVideoRef.current?.currentTime ?? 0,
+    );
     setStarting(false);
     if (!ok) { setStatus(''); return; }
 
@@ -311,12 +358,21 @@ export default function App() {
         </div>
       </div>
 
+      {isHasta ? (
+        <HastaPractice onComplete={handleNextVideo} completeLabel={nextButtonLabel} />
+      ) : (<>
+
       {/* VIDEO GRID */}
       <div style={styles.assessLayout}>
 
         {/* Teacher video */}
         <div style={styles.videoBox}>
           <div style={styles.videoLabel}>Teacher · {current.label}</div>
+          {refInfo?.tempo_bpm && (
+            <div style={{ ...styles.beatChip, ...(beatOn ? styles.beatChipOn : null) }}>
+              ♪ {Math.round(refInfo.tempo_bpm)} BPM
+            </div>
+          )}
           <video
             ref={teacherVideoRef}
             src={teacherVideoSrc}
@@ -456,6 +512,8 @@ export default function App() {
         )}
       </div>
 
+      </>)}
+
     </div>
   );
 }
@@ -501,6 +559,10 @@ const styles = {
                   color:'#FFFDF8', padding:'4px 10px', borderRadius:6, fontSize:12, fontWeight:600,
                   letterSpacing:'0.05em' },
   video:        { width:'100%', display:'block', aspectRatio:'16/9', objectFit:'cover', background:'#000' },
+  beatChip:     { position:'absolute', top:12, right:14, zIndex:10, background:'#00000080', color:'#FFFDF8',
+                  padding:'4px 10px', borderRadius:6, fontSize:12, fontWeight:700, letterSpacing:'0.05em',
+                  transition:'transform 0.08s ease, background 0.08s ease' },
+  beatChipOn:   { background:'#E5862D', transform:'scale(1.15)' },
   progressTrack:{ height:4, background:'#E8DCD0' },
   progressBar:  { height:'100%', background:'linear-gradient(90deg,#E5862D,#B9500F)', transition:'width 0.3s ease' },
   cameraError:  { position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center',

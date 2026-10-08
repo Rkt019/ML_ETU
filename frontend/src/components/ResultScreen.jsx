@@ -20,7 +20,13 @@ export function ResultScreen({ result, studentName, videoType = 'up-down', onRet
     right_score = 0, left_score = 0,
     feedback, grade, movement_details,
     false_start_detected, skipped_frames,
+    rhythm_score, rhythm_offset, tempo_bpm,
   } = result;
+
+  const hasRhythm = typeof rhythm_score === 'number';
+  const rhythmTiming = !hasRhythm || rhythm_offset == null ? null
+    : Math.abs(rhythm_offset) <= 0.15 ? 'right on the beat'
+    : `${Math.abs(rhythm_offset).toFixed(2)}s ${rhythm_offset > 0 ? 'late' : 'early'}`;
 
   const isRightLeft = videoType === 'right-left';
 
@@ -103,9 +109,18 @@ export function ResultScreen({ result, studentName, videoType = 'up-down', onRet
         </>
        
       ) }
-     
-       
+
+        {hasRhythm && (
+          <ScoreRing score={rhythm_score} label="Rhythm" color="#9B3D6E" size={80} />
+        )}
       </div>
+
+      {hasRhythm && (
+        <p style={styles.rhythmNote}>
+          🎵 Music: {Math.round(tempo_bpm)} BPM
+          {rhythmTiming && <> · on average you moved <strong>{rhythmTiming}</strong></>}
+        </p>
+      )}
 
       {/* False-start note */}
       {false_start_detected && skipped_frames > 0 && (
@@ -200,6 +215,7 @@ const styles = {
   feedbackBox:  { background:'#FFFFFF', border:'1px solid #E8DCD0', borderRadius:16,
                   padding:'24px 28px', width:'100%', maxWidth:640,
                   boxShadow:'0 2px 10px rgba(87,0,19,0.06)' },
+  rhythmNote:   { margin:0, fontSize:14, color:'#8A6F6F' },
   falseStartNote:{ background:'#C9781E18', border:'1px solid #C9781E', color:'#8A5A16',
                   borderRadius:10, padding:'10px 16px', fontSize:13, maxWidth:640, textAlign:'center' },
   feedbackTitle:{ fontSize:11, fontWeight:700, color:'#E5862D', letterSpacing:'0.12em',
